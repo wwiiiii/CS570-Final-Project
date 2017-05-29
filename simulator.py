@@ -1,8 +1,12 @@
 import pickle
+import numpy as np
 import matplotlib.pyplot as plt
 from user import User
 from PBM_TS import PBM_TS
 from RandomPick import RandomPick
+from TS import TS
+from PBM_BUCB import PBM_BUCB
+from BUCB import BUCB
 
 class Simulator:
 	def __init__(self, itemid, posProb, itemProb):
@@ -22,47 +26,51 @@ class Simulator:
 		self.posProb = load_sim.posProb
 		self.itemProb = load_sim.itemProb
 
-	def run(self, log_fname, step_cnt=1000):
+	def run(self, log_fname, step_cnt=1000, save_graph=False):
 		user = User(self.posProb, self.itemProb)
-		pbm_ts = PBM_TS(self.itemid, self.posProb)
-		rp = RandomPick(self.itemid, self.posProb)
-		pt_regret = 0.0
-		pt_plot = []
-		rp_regret = 0.0
-		rp_plot = []
+		models = [ 
+			PBM_TS(self.itemid, self.posProb),
+			#RandomPick(self.itemid, self.posProb),
+			TS(self.itemid, self.posProb),
+			BUCB(self.itemid, self.posProb),
+			PBM_BUCB(self.itemid, self.posProb)
+		]
+
+		labels = ['PBM_TS', 'TS', 'BUCB', 'PBM_BUCB']
+		regret = [0.0] * len(models)
+		plots = [[] for _ in range(len(models))]
 		step = 0
 		pointNum = 10000
 		base_step = []
 
 		while step < step_cnt:
 			step += 1
-			if step % 100 == 0:
+			if step % 10 == 0:
 				print(step, step_cnt)
-			selected_items = pbm_ts.select_items(self.L)
-			feedback = user.react(selected_items)
-			pbm_ts.update(selected_items, feedback)
-			pt_regret += sum([self.posProb[l] * self.itemProb[l] for l in range(self.L)]) \
-					- feedback.count(True)#- sum([posProb[l] if feedback[l] else 0.0 for l in range(self.L)])
-			
-			selected_items = rp.select_items(self.L)
-			feedback = user.react(selected_items)
-			rp.update(selected_items, feedback)
-			rp_regret += sum([self.posProb[l] * self.itemProb[l] for l in range(self.L)]) \
-					- feedback.count(True)#- sum([posProb[l] if feedback[l] else 0.0 for l in range(self.L)])
 
-			if step % (step / pointNum) == 0:
+			for i in range(len(models)):
+				selected_items = models[i].select_items(self.L)
+				feedback = user.react(selected_items)
+				models[i].update(selected_items, feedback)
+				regret[i] += sum([self.posProb[l] * self.itemProb[l] for l in range(self.L)]) \
+					- feedback.count(True)
+
+			if step % max(1, (step / pointNum)) == 0:
 				base_step.append(step)
-				pt_plot.append(pt_regret)
-				rp_plot.append(rp_regret)
+				for i in range(len(models)):
+					plots[i].append(regret[i])
 
-		plt.figure()
-		plt.plot(base_step, pt_plot, label='PBM-TS')
-		plt.plot(base_step, rp_plot, label='RANDOM')
-		plt.legend()
-		plt.xlabel('step')
-		plt.ylabel('regret')
-		plt.savefig(log_fname+'graph.png')
-		pbm_ts.save(log_fname+'PBM_TS.pickle')
+		if save_graph:
+			plt.figure()
+			for i in range(len(models)):
+				plt.plot(base_step, plots[i], label=labels[i])
+			plt.legend()
+			plt.xlabel('step')
+			plt.ylabel('regret')
+			plt.savefig(log_fname+'graph.png')
 
-		with open(log_fname, 'w') as f:
-			f.write(str(pt_plot))
+		return base_step, np.array(plots)
+		#models[0].save(log_fname+'PBM_TS.pickle')
+
+		#with open(log_fname, 'w') as f:
+		#	f.write(str(plots[0]))
