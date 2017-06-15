@@ -26,17 +26,21 @@ class Simulator:
 		self.posProb = load_sim.posProb
 		self.itemProb = load_sim.itemProb
 
-	def run(self, log_fname, step_cnt=1000, save_graph=False):
+	def run(self, arg):
+		log_fname = arg.get('log_fname', None)
+		save_graph = arg.get('save_graph', False)
+		step_cnt = arg.get('step_cnt', 1000)
 		user = User(self.posProb, self.itemProb)
 		models = [ 
 			PBM_TS(self.itemid, self.posProb),
 			#RandomPick(self.itemid, self.posProb),
 			TS(self.itemid, self.posProb),
-			BUCB(self.itemid, self.posProb),
+			#BUCB(self.itemid, self.posProb),
 			PBM_BUCB(self.itemid, self.posProb)
 		]
 
-		labels = ['PBM_TS', 'TS', 'BUCB', 'PBM_BUCB']
+		#labels = ['PBM_TS', 'TS', 'BUCB', 'PBM_BUCB']
+		labels = ['PBM_TS', 'TS', 'PBM_BUCB']
 		regret = [0.0] * len(models)
 		plots = [[] for _ in range(len(models))]
 		step = 0

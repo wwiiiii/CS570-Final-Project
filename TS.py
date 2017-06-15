@@ -10,8 +10,8 @@ class TS:
 		self.turn = 0 # how many times selected item list
 		self.itemid = itemid
 		self.posProb = posProb
-		self.S = [0 for __ in range(self.K)]
-		self.N = [0 for __ in range(self.K)]
+		self.S = [0 for _ in range(self.K)]
+		self.N = [0 for _ in range(self.K)]
 
 	#return sorted list of item numbers, with length require_num
 	def select_items(self, required_num):
