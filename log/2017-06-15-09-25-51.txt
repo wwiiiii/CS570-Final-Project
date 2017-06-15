@@ -1,1 +1,0 @@
-('labels', ['PBM_TS', 'TS', 'PBM_BUCB'], '# of arms', 5, '# of pos', 3, 'posProb', [0.9, 0.6, 0.3], 'itemProb', [0.45, 0.35, 0.25, 0.15, 0.05], 'expCnt', 10, 'stepCnt', 100000)
